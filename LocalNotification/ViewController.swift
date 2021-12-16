@@ -7,6 +7,8 @@
 
 import UIKit
 import CoreData
+import UserNotifications
+
 
 class ViewController: UIViewController {
     @IBOutlet weak var total: UILabel!
@@ -22,6 +24,11 @@ class ViewController: UIViewController {
     @IBOutlet weak var logwindow: UIView!
     @IBOutlet weak var table: UITableView!
     @IBOutlet weak var sta: UIButton!
+    var cen: UNUserNotificationCenter?
+    var notcont: UNMutableNotificationContent?
+    let notuid = UUID().uuidString
+       
+    
     
     let cr=(UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     var list=[Log]()
@@ -31,6 +38,11 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        cen = UNUserNotificationCenter.current()
+        cen!.requestAuthorization(options: [.alert,.sound]) { grant, erorr in
+            }
+        notcont = UNMutableNotificationContent()
+               
         getall()
         for i in list {
             tot = tot + Int(i.duration!)!
@@ -68,6 +80,7 @@ class ViewController: UIViewController {
         until.isHidden=true
         anototal.isHidden=false
         update()
+        cen!.removePendingNotificationRequests(withIdentifiers: [notuid])
     }
     
     @IBAction func log(_ sender: UIButton) {
@@ -137,6 +150,15 @@ class ViewController: UIViewController {
             currenttimer.isHidden=false
             anototal.isHidden=false
             update()
+        
+        notcont!.title="local timer alert"
+        notcont!.body="timer is finished"
+        var nottimer = Calendar.current.dateComponents([.year,.month,.day,.hour,.minute,.second], from: currentTime2)
+        var trig = UNCalendarNotificationTrigger(dateMatching: nottimer, repeats: false)
+        var req = UNNotificationRequest(identifier: notuid, content: notcont!, trigger: trig)
+        cen!.add(req) { Error in
+            //error
+            }
         }
     
     func getall(){
